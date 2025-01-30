@@ -12,7 +12,8 @@ module.exports.run = async function ({ event, args }) {
     const validCommands = [
       "google", "gpt", "lyrics", "music", "wikipedia", "youtube", 
       "owner", "define", "darkweb", "facts", "info", "Ai", "Bing", 
-      "Geminipro", "bible", "dictionary", "get", "greet", "/help", "sim"
+      "Geminipro", "bible", "dictionary", "get", "greet", "/help", "sim", 
+      "shorten", "summarize"
     ];
 
     const userMessage = event.message.text.trim().toLowerCase();  // Get user message and convert to lowercase
