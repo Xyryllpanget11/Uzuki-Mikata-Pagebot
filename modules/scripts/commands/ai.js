@@ -1,8 +1,8 @@
 const axios = require('axios');
 
 module.exports.config = {
-  name: "gpt",
-  author: "Kaizenji",
+  name: "ai",
+  author: "Kaizenji and XyryllPanget",
   version: "1.0",
   category: "AI",
   description: "Chat with GPT models.",
