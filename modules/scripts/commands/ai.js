@@ -28,7 +28,7 @@ const models = {
 
 module.exports.config = {
   name: "model",
-  author: "Aljur Pogoy", // change mo lang credits ok lang sakin
+  author: "Aljur Pogoy", // You can change the credits if needed
   version: "1.0",
   category: "AI",
   description: "Use different AI models",
@@ -43,7 +43,7 @@ module.exports.run = async function ({ event, args, api }) {
   if (!args[1]) {
     let modelList = Object.keys(models).join("\n");
     return api.sendMessage(
-      📌 Available AI Models:\n\n${modelList}\n\n💡 Usage: model <model_name> <prompt>,
+      `📌 Available AI Models:\n\n${modelList}\n\n💡 Usage: model <model_name> <prompt>`,
       threadID
     );
   }
@@ -53,7 +53,7 @@ module.exports.run = async function ({ event, args, api }) {
 
   if (!models[model]) {
     return api.sendMessage(
-      ❌Invalid AI model!\nUse /model to see available models.,
+      `❌ Invalid AI model!\nUse /model to see available models.`,
       threadID
     );
   }
@@ -61,24 +61,30 @@ module.exports.run = async function ({ event, args, api }) {
   let finalPrompt = prompt;
 
   if (type === "message_reply" && messageReply) {
-    finalPrompt = Message: "${prompt}"\n\nReplying to: ${messageReply.body};
+    finalPrompt = `Message: "${prompt}"\n\nReplying to: ${messageReply.body}`;
   }
 
   if (!finalPrompt) {
     return api.sendMessage(
-      ⚠️Please provide a prompt!\nUsage: /model ${model} <your question>,
+      `⚠️ Please provide a prompt!\nUsage: /model ${model} <your question>`,
       threadID
     );
   }
 
   try {
     const response = await axios.get(
-      models[model] + encodeURIComponent(finalPrompt) + &uid=${senderID}
+      `${models[model]}${encodeURIComponent(finalPrompt)}&uid=${senderID}`
     );
     const replyText = response.data.reply || response.data.result || "No response.";
 
-    return api.sendMessage(🤖 ${model.toUpperCase()} AI Response:\n${replyText}, threadID);
+    return api.sendMessage(
+      `🤖 ${model.toUpperCase()} AI Response:\n${replyText}`,
+      threadID
+    );
   } catch (error) {
-    return api.sendMessage(❌ Error fetching response!\n${error.message}, threadID);
+    return api.sendMessage(
+      `❌ Error fetching response!\n${error.message}`,
+      threadID
+    );
   }
 };
