@@ -1,68 +1,84 @@
-const axios = require('axios');
+const axios = require("axios");
 
-module.exports.config = {
-  name: "ai",
-  author: "Kaizenji and XyryllPanget",
-  version: "1.0",
-  category: "AI",
-  description: "Chat with GPT models.",
-  adminOnly: false,
-  usePrefix: true,
-  cooldown: 3,
-};
-
-const apiEndpoints = {
+const models = {
+  aidetectorv1: "https://kaiz-apis.gleeze.com/api/aidetector?q=",
+  aidetectorv2: "https://kaiz-apis.gleeze.com/api/aidetector-v2?q=",
+  bertai: "https://kaiz-apis.gleeze.com/api/bert-ai?q=",
+  blackbox: "https://kaiz-apis.gleeze.com/api/blackbox?ask=",
+  chippai: "https://kaiz-apis.gleeze.com/api/chipp-ai?ask=",
+  codestralv1: "https://kaiz-apis.gleeze.com/api/codestral-latest?q=",
+  codestralv2: "https://kaiz-apis.gleeze.com/api/codestral-mamba?q=",
+  deepseekv1: "https://kaiz-apis.gleeze.com/api/deepseek-r1?ask=",
+  deepseekv2: "https://kaiz-apis.gleeze.com/api/deepseek-v3?ask=",
+  geminivision: "https://kaiz-apis.gleeze.com/api/gemini-vision?q=",
+  copilot: "https://kaiz-apis.gleeze.com/api/github-copilot?ask=",
   gpt3: "https://kaiz-apis.gleeze.com/api/gpt-3.5?q=",
   gpt4: "https://kaiz-apis.gleeze.com/api/gpt-4o?ask=",
   gpt4o: "https://kaiz-apis.gleeze.com/api/gpt-4o-pro?ask=",
-  gpt4mini: "https://kaiz-apis.gleeze.com/api/gpt4o-mini?ask="
+  gpt4mini: "https://kaiz-apis.gleeze.com/api/gpt4o-mini?ask=",
+  ministrallarge: "https://kaiz-apis.gleeze.com/api/mistral-large?q=",
+  ministalsmall: "https://kaiz-apis.gleeze.com/api/mistral-small?q=",
+  mixtral8xb: "https://kaiz-apis.gleeze.com/api/mixtral-8x22b?q=",
+  mixtral8xS: "https://kaiz-apis.gleeze.com/api/mixtral-8x7b?q=",
+  pixtral2b: "https://kaiz-apis.gleeze.com/api/pixtral-12b?q=",
+  qwen2xc: "https://kaiz-apis.gleeze.com/api/qwen2.5-72b?ask=",
+  claude: "https://kaiz-apis.gleeze.com/api/claude3-haiku?ask=",
+  o3: "https://kaiz-apis.gleeze.com/api/o3-mini?ask=",
 };
 
-module.exports.run = async function ({ event, args }) {
-  if (event.type === "message") {
-    let model = args.shift();
-    let prompt = args.join(" ");
-    let uid = event.sender.id;
-    let webSearch = "off"; // Default web search option
+module.exports.config = {
+  name: "model",
+  author: "Aljur Pogoy", // change mo lang credits ok lang sakin
+  version: "1.0",
+  category: "AI",
+  description: "Use different AI models",
+  adminOnly: false,
+  usePrefix: false,
+  cooldown: 3,
+};
 
-    if (!apiEndpoints[model]) {
-      return api.sendMessage("Invalid model! Use: gpt3, gpt4, gpt4o, gpt4mini.", event.sender.id);
-    }
+module.exports.run = async function ({ event, args, api }) {
+  const { threadID, senderID, type, messageReply } = event;
 
-    if (!prompt) {
-      return api.sendMessage("Please provide a prompt.", event.sender.id);
-    }
+  if (!args[1]) {
+    let modelList = Object.keys(models).join("\n");
+    return api.sendMessage(
+      📌 Available AI Models:\n\n${modelList}\n\n💡 Usage: model <model_name> <prompt>,
+      threadID
+    );
+  }
 
-    try {
-      let response = await axios.get(`${apiEndpoints[model]}${encodeURIComponent(prompt)}&uid=${uid}&webSearch=${webSearch}`);
-      if (response.data.error) {
-        return api.sendMessage(response.data.error, event.sender.id);
-      }
-      api.sendMessage(response.data.reply, event.sender.id);
-    } catch (error) {
-      console.log(error);
-      api.sendMessage("Error fetching response. Please check if the API is available and try again later.", event.sender.id);
-    }
-  } else if (event.type === "message_reply") {
-    let model = "gpt4"; // Default model for replies
-    let prompt = `Message: "${args.join(" ")}"
-\nReplying to: ${event.message.reply_to.text}`;
-    let uid = event.sender.id;
-    let webSearch = "off";
+  const model = args[0].toLowerCase();
+  const prompt = args.slice(1).join(" ");
 
-    if (!prompt) {
-      return api.sendMessage("Please provide a prompt.", event.sender.id);
-    }
+  if (!models[model]) {
+    return api.sendMessage(
+      ❌Invalid AI model!\nUse /model to see available models.,
+      threadID
+    );
+  }
 
-    try {
-      let response = await axios.get(`${apiEndpoints[model]}${encodeURIComponent(prompt)}&uid=${uid}&webSearch=${webSearch}`);
-      if (response.data.error) {
-        return api.sendMessage(response.data.error, event.sender.id);
-      }
-      api.sendMessage(response.data.reply, event.sender.id);
-    } catch (error) {
-      console.log(error);
-      api.sendMessage("Error fetching response. Please check if the API is available and try again later.", event.sender.id);
-    }
+  let finalPrompt = prompt;
+
+  if (type === "message_reply" && messageReply) {
+    finalPrompt = Message: "${prompt}"\n\nReplying to: ${messageReply.body};
+  }
+
+  if (!finalPrompt) {
+    return api.sendMessage(
+      ⚠️Please provide a prompt!\nUsage: /model ${model} <your question>,
+      threadID
+    );
+  }
+
+  try {
+    const response = await axios.get(
+      models[model] + encodeURIComponent(finalPrompt) + &uid=${senderID}
+    );
+    const replyText = response.data.reply || response.data.result || "No response.";
+
+    return api.sendMessage(🤖 ${model.toUpperCase()} AI Response:\n${replyText}, threadID);
+  } catch (error) {
+    return api.sendMessage(❌ Error fetching response!\n${error.message}, threadID);
   }
 };
